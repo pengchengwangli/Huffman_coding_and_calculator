@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>哈夫曼文件压缩与解压</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="card-title text-primary"><i class="bi bi-file-earmark-zip"></i> 压缩文件</h4>
+                    <p class="card-text text-muted">选择一个文本文件，使用哈夫曼编码进行压缩。</p>
+                    <form id="compressForm">
+                        <div class="mb-3">
+                            <input type="file" id="compressFile" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-compress"></i> 压缩</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="card-title text-success"><i class="bi bi-file-earmark-arrow-down"></i> 解压文件</h4>
+                    <p class="card-text text-muted">选择一个压缩文件，将其解压为文本。</p>
+                    <form id="decompressForm">
+                        <div class="mb-3">
+                            <input type="file" id="decompressFile" class="form-control" accept=".bin" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100"><i class="bi bi-decompress"></i> 解压</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="progress mt-4" style="display: none;" id="progressContainer">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" id="progressBar" style="width: 0%">0%</div>
+    </div>
+    
+    <div class="mt-5 text-center" id="result" style="display: none;">
+        <div class="alert alert-info" role="alert">
+            <p>文件已处理完成，点击下方按钮下载。</p>
+            <a id="downloadLink" class="btn btn-secondary btn-lg" download>下载处理后的文件</a>
+        </div>
+    </div>
+    
+    <!-- 哈夫曼编码字典展示区域 -->
+    <div class="mt-5 text-center" id="huffmanCodeContainer" style="display: none;">
+        <h4 class="text-muted">哈夫曼编码字典</h4>
+        <ul id="huffmanCodeList" class="list-group"></ul>
+    </div>
+</div>
+
+<script>
+    async function uploadFile(url, fileInputId, filename) {
+        const fileInput = document.getElementById(fileInputId);
+        if (fileInput.files.length === 0) return alert("请选择文件！");
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        const progressBar = document.getElementById('progressBar');
+        const progressContainer = document.getElementById('progressContainer');
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressBar.textContent = '0%';
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error("操作失败");
+
+            const data = await response.json();
+            displayDownloadLink(data.file, filename);
+
+            // 如果哈夫曼编码字典存在，显示字典内容
+            if (data.huffmanCodeDict) {
+                displayHuffmanCode(data.huffmanCodeDict);
+            }
+        } catch (error) {
+            alert("错误: " + error.message);
+        } finally {
+            progressContainer.style.display = 'none';
+        }
+    }
+
+    document.getElementById('compressForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+        uploadFile('/api/compress/', 'compressFile', 'compressed.bin');
+    });
+
+    document.getElementById('decompressForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+        uploadFile('/api/decompress/', 'decompressFile', 'decompressed.txt');
+    });
+
+    function displayDownloadLink(fileUrl, filename) {
+        const downloadLink = document.getElementById('downloadLink');
+        downloadLink.href = fileUrl;
+        downloadLink.download = filename;
+        document.getElementById('result').style.display = 'block';
+    }
+
+    function displayHuffmanCode(huffmanCodeDict) {
+        const huffmanCodeList = document.getElementById('huffmanCodeList');
+        huffmanCodeList.innerHTML = ''; // 清空之前的内容
+        for (const [char, code] of Object.entries(huffmanCodeDict)) {
+            const listItem = document.createElement('li');
+            listItem.classList.add('list-group-item');
+            listItem.textContent = `${char}: ${code}`;
+            huffmanCodeList.appendChild(listItem);
+        }
+        document.getElementById('huffmanCodeContainer').style.display = 'block';
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.js"></script>
+</body>
+</html>
