@@ -75,8 +75,15 @@ def dfs_get_dic(node, prefix="", chardic=None):
 
 
 def file_with(uploaded_file, sefile: str):
-    text = uploaded_file.read()
-    Nodedic = Counter(text)
+    text = uploaded_file.read().decode()
+    print(text)
+    Nodedic = {}
+    for ch in text:
+        if Nodedic.get(ch):
+            Nodedic[ch] += 1
+        else:
+            Nodedic[ch] = 1
+
     print(Nodedic)
     tree_node = build_tree(Nodedic)
     chardic = dfs_get_dic(tree_node)
@@ -86,13 +93,13 @@ def file_with(uploaded_file, sefile: str):
     bitcode = ''.join(chardic[ch] for ch in text)
     padding = 8 - len(bitcode) % 8
     bitcode += '0' * padding
-    file_name = f'tree_{datetime.now().strftime("%Y%m%d_%H%M%S")}.bin'
+    file_name = f'tree_{datetime.now().strftime("%Y%m%d_%H%M%S")}.cod'
     file_path = os.path.join(settings.MEDIA_ROOT, file_name)
     with open(file_path, 'wb') as f:
         selen = len(sefile)
         f.write(struct.pack('I', selen))
         f.write(sefile.encode('utf-8'))
-        json_chardic = json.dumps(chardic,ensure_ascii=False)
+        json_chardic = json.dumps(chardic, ensure_ascii=False)
         f.write(struct.pack('I', len(json_chardic.encode('utf-8'))))
         f.write(json_chardic.encode('utf-8'))
         f.write(struct.pack('I', padding))
@@ -120,7 +127,7 @@ def unfile_with(uploaded_file):
         bit_string += bits
         byte = f.read(1)
     bit_string = bit_string[:-padding]
-    reversed_codes = {v: chr(int(k)) for k, v in chardic.items()}
+    reversed_codes = {v: k for k, v in chardic.items()}
     # print(reversed_codes)
     decoded_text = ""
     current_code = ""
@@ -146,7 +153,7 @@ def compress_file(request):
         file_extension = os.path.splitext(file_name)[1]
         fileurl, edges = file_with(uploaded_file, file_extension)
         response_data = {'file': fileurl}
-        tmp = {chr(k): v for k, v in edges.items()}
+        tmp = {k: v for k, v in edges.items()}
         response_data['huffmanCodeDict'] = tmp
         # print(response_data)
         return JsonResponse(response_data)
@@ -162,7 +169,7 @@ def decompress_file(request):
         file_name = uploaded_file.name
         fileurl, uu = unfile_with(uploaded_file)
         response_data = {'file': fileurl}
-        tmp = {chr(int(k)): v for k, v in uu.items()}
+        tmp = {k : v for k, v in uu.items()}
         response_data['huffmanCodeDict'] = tmp
         return JsonResponse(response_data)
     else:
