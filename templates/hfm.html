@@ -9,6 +9,7 @@
 <body class="bg-light">
 <div class="container my-5">
     <div class="row justify-content-center">
+        <!-- 压缩文件 -->
         <div class="col-md-5 mb-4">
             <div class="card shadow-sm">
                 <div class="card-body">
@@ -23,6 +24,7 @@
                 </div>
             </div>
         </div>
+        <!-- 解压文件 -->
         <div class="col-md-5 mb-4">
             <div class="card shadow-sm">
                 <div class="card-body">
@@ -38,18 +40,26 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- 文件处理进度条 -->
     <div class="progress mt-4" style="display: none;" id="progressContainer">
         <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" id="progressBar" style="width: 0%">0%</div>
     </div>
-    
+
+    <!-- 文件处理结果下载区域 -->
     <div class="mt-5 text-center" id="result" style="display: none;">
         <div class="alert alert-info" role="alert">
             <p>文件已处理完成，点击下方按钮下载。</p>
             <a id="downloadLink" class="btn btn-secondary btn-lg" download>下载处理后的文件</a>
         </div>
     </div>
-    
+
+    <!-- 文件内容预览区域 -->
+    <div class="mt-5 text-center" id="filePreviewContainer" style="display: none;">
+        <h4 class="text-muted">文件内容预览</h4>
+        <div id="filePreview" class="alert alert-secondary text-start" style="white-space: pre-wrap;"></div>
+    </div>
+
     <!-- 哈夫曼编码字典展示区域 -->
     <div class="mt-5 text-center" id="huffmanCodeContainer" style="display: none;">
         <h4 class="text-muted">哈夫曼编码字典</h4>
@@ -81,6 +91,13 @@
 
             const data = await response.json();
             displayDownloadLink(data.file, filename);
+
+            // 显示文件内容预览
+            if (data.contentPreview) {
+                const filePreview = document.getElementById('filePreview');
+                filePreview.textContent = data.contentPreview;
+                document.getElementById('filePreviewContainer').style.display = 'block';
+            }
 
             // 如果哈夫曼编码字典存在，显示字典内容
             if (data.huffmanCodeDict) {

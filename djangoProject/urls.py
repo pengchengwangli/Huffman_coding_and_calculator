@@ -16,17 +16,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.contrib.staticfiles.views import serve
-from django.urls import path,re_path
+from django.urls import path, re_path
 from calhfm import views
 from django.conf import settings
 from django.conf.urls.static import static
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('cal/', views.cal, name='cal'),
-    path('calculate/',views.cal,name='calculate'),
+                  path('admin/', admin.site.urls),
+                  path('cal/', views.cal, name='cal'),
+                  path('calculate/', views.cal, name='calculate'),
 
-    # re_path('media/(?P<path>.*)',serve,{'document_root':settings.MEDIA_ROOT},name='media'),
-    path('api/compress/', views.compress_file, name='compress_file'),
-    path('api/decompress/', views.decompress_file, name='decompress_file'),
+                  # re_path('media/(?P<path>.*)',serve,{'document_root':settings.MEDIA_ROOT},name='media'),
+                  path('api/compress/', views.compress_file, name='compress_file'),
+                  path('api/decompress/', views.decompress_file, name='decompress_file'),
+                  path('', views.compress_file)
 
-]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

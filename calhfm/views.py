@@ -2,7 +2,7 @@ import heapq
 import json
 import os
 import struct
-from collections import Counter
+# from collections import Counter
 from datetime import datetime
 
 # import matplotlib
@@ -12,12 +12,14 @@ from django.http import JsonResponse
 from django.shortcuts import render
 
 import ctypes
+
+
 # import matplotlib.pyplot as plt
 # import networkx as nx
-import threading
-
-# 创建锁
-lock = threading.Lock()
+# import threading
+#
+# # 创建锁
+# lock = threading.Lock()
 
 
 # Create your views here.
@@ -75,8 +77,8 @@ def dfs_get_dic(node, prefix="", chardic=None):
 
 
 def file_with(uploaded_file, sefile: str):
-    text = uploaded_file.read().decode()
-    print(text)
+    text = uploaded_file.read().decode('utf-8', errors='ignore')
+    # print(text)
     Nodedic = {}
     for ch in text:
         if Nodedic.get(ch):
@@ -84,7 +86,7 @@ def file_with(uploaded_file, sefile: str):
         else:
             Nodedic[ch] = 1
 
-    print(Nodedic)
+    # print(Nodedic)
     tree_node = build_tree(Nodedic)
     chardic = dfs_get_dic(tree_node)
     # tmp = dfs_tree_dic(tree_node)
@@ -106,8 +108,11 @@ def file_with(uploaded_file, sefile: str):
         for i in range(0, len(bitcode), 8):
             byte = bitcode[i:i + 8]
             f.write(bytes([int(byte, 2)]))
+    fread = open("." + os.path.join(settings.MEDIA_URL, file_name), 'r', encoding="utf-8", errors="ignore")
+    test = fread.read(800)
+    print(test)
     file_url = os.path.join(settings.MEDIA_URL, file_name) + f"?t={datetime.now().timestamp()}"
-    return file_url, tmp
+    return file_url, tmp, test
 
 
 def unfile_with(uploaded_file):
@@ -118,7 +123,7 @@ def unfile_with(uploaded_file):
     tmp = f.read(dict_len)
     print(tmp)
     chardic = json.loads(tmp.decode())
-    print(chardic)
+    # print(chardic)
     padding = struct.unpack('I', f.read(4))[0]
     bit_string = ""
     byte = f.read(1)
@@ -141,7 +146,7 @@ def unfile_with(uploaded_file):
     with open(file_path, 'w', encoding='utf-8') as file:
         file.write(decoded_text)
     file_url = os.path.join(settings.MEDIA_URL, file_name) + f"?t={datetime.now().timestamp()}"
-    return file_url, chardic
+    return file_url, chardic, decoded_text[:800]
 
 
 def compress_file(request):
@@ -151,10 +156,11 @@ def compress_file(request):
             return JsonResponse({'error': 'No file provided'}, status=400)
         file_name = uploaded_file.name
         file_extension = os.path.splitext(file_name)[1]
-        fileurl, edges = file_with(uploaded_file, file_extension)
+        fileurl, edges, text = file_with(uploaded_file, file_extension)
         response_data = {'file': fileurl}
         tmp = {k: v for k, v in edges.items()}
         response_data['huffmanCodeDict'] = tmp
+        response_data['contentPreview'] = text
         # print(response_data)
         return JsonResponse(response_data)
     else:
@@ -167,10 +173,11 @@ def decompress_file(request):
         if not uploaded_file:
             return JsonResponse({'error': 'No file provided'}, status=400)
         file_name = uploaded_file.name
-        fileurl, uu = unfile_with(uploaded_file)
+        fileurl, uu, test = unfile_with(uploaded_file)
         response_data = {'file': fileurl}
-        tmp = {k : v for k, v in uu.items()}
+        tmp = {k: v for k, v in uu.items()}
         response_data['huffmanCodeDict'] = tmp
+        response_data['contentPreview'] = test
         return JsonResponse(response_data)
     else:
         return render(request, 'hfm.html')
